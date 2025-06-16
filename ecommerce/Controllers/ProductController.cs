@@ -1,7 +1,8 @@
 ﻿using ecommerce.API.DTOs.Product;
-using ecommerce.API.DTOs.Request.Product;
+using ecommerce.API.DTOs.Response.Product;
 using ecommerce.Domain.Entities;
 using ecommerce.Domain.Interfaces.Services;
+using ecommerce.Shared.DTOs.Response.ProductStock;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ecommerce.Api.Controllers;
@@ -21,9 +22,14 @@ public class ProductController : ControllerBase
     public async Task<ActionResult<List<ProductResponseDTO>>> Get()
     {
         var products = await _productService.GetAllAsync();
-        var dtos = products.Select(p => new ProductResponseDTO(p.Id, p.Name, p.Description, p.UnitPrice)).ToList();
+        var dtos = products.Select(p => new ProductResponseDTO(p.Id, p.Name, p.Description, p.UnitPrice)
+        {
+            Stock = new ProductStockResponseDTO(p.Stock?.Quantity ?? 0)
+        }).ToList();
+
         return Ok(dtos);
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductResponseDTO>> GetById(Guid id)
@@ -31,20 +37,36 @@ public class ProductController : ControllerBase
         var product = await _productService.GetByIdAsync(id);
         if (product == null)
             return NotFound();
+        var dto = new ProductResponseDTO(product.Id, product.Name, product.Description, product.UnitPrice)
+        {
+            Stock = new ProductStockResponseDTO(product.Stock?.Quantity ?? 0)
+        };
 
-        var dto = new ProductResponseDTO(product.Id, product.Name, product.Description, product.UnitPrice);
         return Ok(dto);
     }
+
 
     [HttpPost]
     public async Task<ActionResult<ProductResponseDTO>> Create(ProductRequestDTO productDto)
     {
-        var product = new Product(productDto.Name, productDto.Description, productDto.UnitPrice);
+        var product = new Product(productDto.Name, productDto.Description, productDto.UnitPrice)
+        {
+            Stock = new ProductStock
+            {
+                Quantity = productDto.StockQuantity
+            }
+        };
+
         var newProduct = await _productService.AddAsync(product);
 
-        var dto = new ProductResponseDTO(newProduct.Id, newProduct.Name, newProduct.Description, newProduct.UnitPrice);
+        var dto = new ProductResponseDTO(newProduct.Id, newProduct.Name, newProduct.Description, newProduct.UnitPrice)
+        {
+            Stock = new ProductStockResponseDTO(newProduct.Stock?.Quantity ?? 0)
+        };
+
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, ProductRequestDTO productDto)
@@ -56,7 +78,7 @@ public class ProductController : ControllerBase
 
         var updated = await _productService.UpdateAsync(product);
         if (!updated)
-            return StatusCode(500, "Erro ao atualizar o produto.");
+            return StatusCode(500, "Error on update product.");
 
         return NoContent();
     }

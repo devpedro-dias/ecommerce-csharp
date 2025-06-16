@@ -1,6 +1,7 @@
 ﻿using ecommerce.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace ecommerce.Infra.Context;
 
@@ -32,6 +33,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Product>()
             .Property(p => p.UnitPrice)
             .HasPrecision(10, 2);
+
+        builder.Entity<Product>()
+            .HasOne(p => p.Stock)
+            .WithOne(s => s.Product)
+            .HasForeignKey<ProductStock>(s => s.ProductId);
 
         builder.Entity<OrderProduct>()
             .Property(p => p.TotalPrice)

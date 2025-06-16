@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13 d17.14
+VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ecommerce.API", "ecommerce\ecommerce.API.csproj", "{987AE983-A3DA-4D34-B2ED-1EC1E2F0E7C5}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ecommerce.Infra", "ecommerce.Infra\ecommerce.Infra.csproj", "{DC1BF003-E20F-41FD-9EB8-4D7D2FEF69CC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ecommerce.Front", "ecommerce.Front\ecommerce.Front.csproj", "{F4865D3D-6395-41C8-837A-833B41CE2DF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ecommerce.Shared", "ecommerce.Shared\ecommerce.Shared.csproj", "{4EB8EC1C-8F33-4C6B-A1EF-1D5645BB8915}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{F4865D3D-6395-41C8-837A-833B41CE2DF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4865D3D-6395-41C8-837A-833B41CE2DF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F4865D3D-6395-41C8-837A-833B41CE2DF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EB8EC1C-8F33-4C6B-A1EF-1D5645BB8915}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EB8EC1C-8F33-4C6B-A1EF-1D5645BB8915}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EB8EC1C-8F33-4C6B-A1EF-1D5645BB8915}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EB8EC1C-8F33-4C6B-A1EF-1D5645BB8915}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
