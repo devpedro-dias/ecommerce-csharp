@@ -1,7 +1,16 @@
-﻿using ecommerce.Infra.Context;
+﻿using ecommerce.Domain.Interfaces.Repository;
+using ecommerce.Domain.Interfaces.Repository.DbConfig;
+using ecommerce.Domain.Interfaces.Services;
+using ecommerce.Domain.Interfaces.Services.DbConfig;
+using ecommerce.Domain.Services;
+using ecommerce.Domain.Services.DbConfig;
+using ecommerce.Infra.Context;
+using ecommerce.Infra.Repository;
+using ecommerce.Infra.Repository.DbConfig;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +24,21 @@ builder.Services
     .AddIdentityApiEndpoints<ApplicationUser>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-builder.Services.AddControllers();
+builder.Services.AddScoped(typeof(IRepositoryBaseConfig<>), typeof(RepositoryBaseConfig<>));
+builder.Services.AddScoped(typeof(IServiceBaseConfig<>), typeof(ServiceBaseConfig<>));
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options => options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -33,14 +55,14 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapIdentityApi<ApplicationUser>();
 
-app.MapGroup("auth").MapIdentityApi<ApplicationUser>().WithTags("Autorização");
+app.MapGroup("auth").MapIdentityApi<ApplicationUser>().WithTags("Auth");
 
 app.MapPost("auth/logout", async ([FromServices] SignInManager<ApplicationUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
     return Results.Ok();
-}).RequireAuthorization().WithTags("Autoriza��o");
+}).RequireAuthorization().WithTags("Auth");
+
 
 app.Run();
