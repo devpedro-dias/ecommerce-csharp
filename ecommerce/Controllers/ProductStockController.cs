@@ -86,4 +86,15 @@ public class ProductStockController : ControllerBase
         return Ok(response);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var stock = await _productStockService.GetByIdAsync(id);
+
+        if (stock == null) return NotFound();
+
+        await _productStockService.DeleteAsync(stock);
+
+        return NoContent();
+    }
 }
