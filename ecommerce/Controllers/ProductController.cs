@@ -2,6 +2,7 @@
 using ecommerce.API.DTOs.Response.Product;
 using ecommerce.Domain.Entities;
 using ecommerce.Domain.Interfaces.Services;
+using ecommerce.Shared.DTOs.Response.Product;
 using ecommerce.Shared.DTOs.Response.ProductStock;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +25,7 @@ public class ProductController : ControllerBase
         var products = await _productService.GetAllAsync();
         var dtos = products.Select(p => new ProductResponseDTO(p.Id, p.Name, p.Description, p.UnitPrice)
         {
-            Stock = new ProductStockResponseDTO(p.Stock?.Quantity ?? 0)
+            Stock = new ProductStockSummaryResponseDTO(p.Stock?.Quantity ?? 0)
         }).ToList();
 
         return Ok(dtos);
@@ -39,7 +40,7 @@ public class ProductController : ControllerBase
             return NotFound();
         var dto = new ProductResponseDTO(product.Id, product.Name, product.Description, product.UnitPrice)
         {
-            Stock = new ProductStockResponseDTO(product.Stock?.Quantity ?? 0)
+            Stock = new ProductStockSummaryResponseDTO(product.Stock?.Quantity ?? 0)
         };
 
         return Ok(dto);
@@ -61,7 +62,7 @@ public class ProductController : ControllerBase
 
         var dto = new ProductResponseDTO(newProduct.Id, newProduct.Name, newProduct.Description, newProduct.UnitPrice)
         {
-            Stock = new ProductStockResponseDTO(newProduct.Stock?.Quantity ?? 0)
+            Stock = new ProductStockSummaryResponseDTO(newProduct.Stock?.Quantity ?? 0)
         };
 
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);

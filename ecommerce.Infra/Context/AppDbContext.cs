@@ -10,6 +10,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Product> Products { get; set; }
     public DbSet<Order> Order { get; set; }
     public DbSet<OrderProduct> OrderProduct { get; set; }
+    public DbSet<ProductStock> ProductStock { get; set; }
     public DbSet<ApplicationUser> Users { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)

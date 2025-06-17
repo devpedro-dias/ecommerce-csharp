@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace ecommerce.Shared.DTOs.Response.ProductStock;
 
-namespace ecommerce.Shared.DTOs.Response.ProductStock;
-public record ProductStockResponseDTO(int Quantity);
-
+public record ProductStockResponseDTO(
+    Guid Id,
+    Guid ProductId,
+    string? ProductName,
+    decimal? ProductUnitPrice,
+    int Quantity
+);

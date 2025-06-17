@@ -1,8 +1,8 @@
-﻿using ecommerce.Shared.DTOs.Response.ProductStock;
+﻿using ecommerce.Shared.DTOs.Response.Product;
 
 namespace ecommerce.API.DTOs.Response.Product;
 
 public record ProductResponseDTO(Guid Id, string Name, string Description, decimal UnitPrice)
 {
-    public ProductStockResponseDTO Stock { get; init; }
+    public ProductStockSummaryResponseDTO Stock { get; init; }
 }

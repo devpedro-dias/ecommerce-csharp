@@ -30,6 +30,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderProductService, OrderProductService>();
 builder.Services.AddScoped<IOrderProductRepository,  OrderProductRepository>();
+builder.Services.AddScoped<IProductStockRepository, ProductStockRepository>();
+builder.Services.AddScoped<IProductStockService, ProductStockService>();
 
 builder.Services.AddScoped(typeof(IRepositoryBaseConfig<>), typeof(RepositoryBaseConfig<>));
 builder.Services.AddScoped(typeof(IServiceBaseConfig<>), typeof(ServiceBaseConfig<>));
