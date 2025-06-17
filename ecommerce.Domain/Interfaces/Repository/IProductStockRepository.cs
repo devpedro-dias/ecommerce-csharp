@@ -7,4 +7,5 @@ public interface IProductStockRepository : IRepositoryBaseConfig<ProductStock>
 {
     Task<List<ProductStock>> GetAllAsync();
     Task<ProductStock> GetByIdAsync(Guid id);
+    Task<ProductStock> GetByProductIdAsync(Guid productId);
 }

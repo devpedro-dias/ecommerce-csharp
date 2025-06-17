@@ -22,4 +22,9 @@ public class ProductStockRepository : RepositoryBaseConfig<ProductStock>, IProdu
     {
         return await _context.ProductStock.Include(ps => ps.Product).FirstOrDefaultAsync(ps => ps.Id == id);
     }
+
+    public async Task<ProductStock> GetByProductIdAsync(Guid productId)
+    {
+        return await _context.ProductStock.Include(ps => ps.Product).FirstAsync(ps => ps.ProductId == productId);
+    }
 }
