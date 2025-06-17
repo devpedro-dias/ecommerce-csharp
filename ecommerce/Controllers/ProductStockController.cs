@@ -1,4 +1,5 @@
 ﻿using ecommerce.Domain.Interfaces.Services;
+using ecommerce.Shared.DTOs.Request.ProductStock;
 using ecommerce.Shared.DTOs.Response.ProductStock;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ public class ProductStockController : ControllerBase
         return Ok(dtos);
     }
 
-    [HttpGet("/productStock/{id}")]
+    [HttpGet("/api/ProductStock/{id}")]
     public async Task<ActionResult<ProductStockResponseDTO>> GetByProductStockId(Guid id)
     {
         var productStock = await _productStockService.GetByIdAsync(id);
@@ -51,7 +52,7 @@ public class ProductStockController : ControllerBase
         return Ok(dto);
     }
 
-    [HttpGet("/productStock/product/{productId}")]
+    [HttpGet("/api/ProductStock/product/{productId}")]
     public async Task<ActionResult<ProductStockResponseDTO>> GetByProductId(Guid productId)
     {
         var productStock = await _productStockService.GetAllAsync();
@@ -69,4 +70,20 @@ public class ProductStockController : ControllerBase
 
         return Ok(dto);
     }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ProductStockResponseDTO>> Update(Guid id, [FromBody] UpdateProductStockRequestDTO dto)
+    {
+        var stock = await _productStockService.GetByIdAsync(id);
+
+        if (stock == null) return NotFound();
+
+        stock.Quantity = dto.Quantity;
+        await _productStockService.UpdateAsync(stock);
+
+        var response = new ProductStockResponseDTO(stock.Id, stock.ProductId, stock.Product?.Name, stock.Product?.UnitPrice, stock.Quantity);
+
+        return Ok(response);
+    }
+
 }
