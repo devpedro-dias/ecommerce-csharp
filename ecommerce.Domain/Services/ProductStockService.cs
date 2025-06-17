@@ -12,4 +12,13 @@ public class ProductStockService : ServiceBaseConfig<ProductStock>, IProductStoc
     {
         _productStockRepository = productStockRepository;
     }
+
+    public async Task<List<ProductStock>> GetAllAsync()
+    {
+        return await _productStockRepository.GetAllAsync();
+    }
+    public async Task<ProductStock> GetByIdAsync(Guid id)
+    {
+        return await _productStockRepository.GetByIdAsync(id);
+    }
 }

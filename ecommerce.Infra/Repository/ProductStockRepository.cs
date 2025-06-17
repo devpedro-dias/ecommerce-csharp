@@ -18,5 +18,8 @@ public class ProductStockRepository : RepositoryBaseConfig<ProductStock>, IProdu
         return await _context.ProductStock.Include(ps => ps.Product).ToListAsync();
     }
 
-
+    public async Task<ProductStock> GetByIdAsync(Guid id)
+    {
+        return await _context.ProductStock.Include(ps => ps.Product).FirstOrDefaultAsync(ps => ps.Id == id);
+    }
 }

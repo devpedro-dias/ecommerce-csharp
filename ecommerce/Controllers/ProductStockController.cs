@@ -34,4 +34,20 @@ public class ProductStockController : ControllerBase
         return Ok(dtos);
     }
 
+    [HttpGet("/productStock/{id}")]
+    public async Task<ActionResult<ProductStockResponseDTO>> GetByProductStockId(Guid id)
+    {
+        var productStock = await _productStockService.GetByIdAsync(id);
+
+        if(productStock == null) return NotFound();
+
+        var dto = new ProductStockResponseDTO(
+            productStock.Id,
+            productStock.ProductId,
+            productStock.Product?.Name,
+            productStock.Product?.UnitPrice,
+            productStock.Quantity);
+
+        return Ok(dto);
+    }
 }

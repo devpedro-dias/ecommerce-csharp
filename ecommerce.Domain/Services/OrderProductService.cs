@@ -14,4 +14,9 @@ public class OrderProductService : ServiceBaseConfig<OrderProduct>, IOrderProduc
 	{
 		_orderProductRepository = orderProductRepository;
 	}
+
+    public async Task<OrderProduct> GetByIdAsync(Guid id)
+	{
+		return await _orderProductRepository.GetByIdAsync(id);
+	}
 }
