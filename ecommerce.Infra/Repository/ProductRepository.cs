@@ -16,12 +16,9 @@ public class ProductRepository : RepositoryBaseConfig<Product>, IProductReposito
 
     public async Task<Product> GetByIdAsync(Guid id)
     {
-        var product = await _context.Products
+        return await _context.Products
                     .Include(p => p.Stock)
                     .FirstOrDefaultAsync(p => p.Id == id);
-
-        if (product == null) throw new ArgumentNullException(nameof(product));
-        return product;
     }
 
     public async Task<List<Product>> GetAllAsync()

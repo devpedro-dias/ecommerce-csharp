@@ -30,10 +30,39 @@ public class OrderProductController : ControllerBase
         var dtos = orderProducts.Select(op => new OrderProductResponseDTO(
             op.Id,
             op.ProductId,
+            op.Product?.Name,
+            op.Product?.UnitPrice,
+            op.OrderId,
+            op.Order?.Date ?? default,
             op.Quantity,
             op.TotalPrice
-            )).ToList();
+        )).ToList();
+
 
         return Ok(dtos);
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<OrderProductResponseDTO>> GetByOrderProductId(Guid id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!User.Identity.IsAuthenticated || string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var orderProduct = await _orderProductService.GetByIdAsync(id);
+        if (orderProduct == null) return NotFound();
+
+        var dto = new OrderProductResponseDTO(
+            orderProduct.Id,
+            orderProduct.ProductId,
+            orderProduct.Product?.Name,
+            orderProduct.Product?.UnitPrice,
+            orderProduct.OrderId,
+            orderProduct.Order?.Date ?? default,
+            orderProduct.Quantity,
+            orderProduct.TotalPrice
+        );
+
+        return Ok(dto);
+    }
+
 }

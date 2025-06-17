@@ -3,6 +3,7 @@ using ecommerce.API.DTOs.Request.OrderProducts;
 using ecommerce.API.DTOs.Response.Order;
 using ecommerce.API.DTOs.Response.OrderProducts;
 using ecommerce.Domain.Interfaces.Services;
+using ecommerce.Shared.DTOs.Response.Order;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -30,19 +31,20 @@ public class OrderController : ControllerBase
 
         var orders = await _orderService.GetByUserIdAsync(userId);
 
-        var dtos = orders.Select(order => new OrderResponseDTO(
+        var responseDtos = orders.Select(order => new OrderResponseDTO(
             order.Id,
             order.UserId!,
             order.Date,
-            order.OrderProducts.Select(op => new OrderProductResponseDTO(
+            order.OrderProducts.Select(op => new OrderProductSummaryDTO(
                 op.Id,
                 op.ProductId,
+                op.OrderId,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
         )).ToList();
 
-        return Ok(dtos);
+        return Ok(responseDtos);
     }
 
     [HttpGet("{id}")]
@@ -60,19 +62,20 @@ public class OrderController : ControllerBase
         if (order.UserId != userId)
             return Forbid();
 
-        var dto = new OrderResponseDTO(
+        var responseDto = new OrderResponseDTO(
             order.Id,
             order.UserId!,
             order.Date,
-            order.OrderProducts.Select(op => new OrderProductResponseDTO(
+            order.OrderProducts.Select(op => new OrderProductSummaryDTO(
                 op.Id,
                 op.ProductId,
+                op.OrderId,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
         );
 
-        return Ok(dto);
+        return Ok(responseDto);
     }
 
     [HttpPost]
@@ -85,19 +88,20 @@ public class OrderController : ControllerBase
 
         var order = await _orderService.CreateOrderWithProductsAsync(userId, dto.Date, dto.OrderProducts);
 
-        var response = new OrderResponseDTO(
+        var responseDto = new OrderResponseDTO(
             order.Id,
             order.UserId!,
             order.Date,
-            order.OrderProducts.Select(op => new OrderProductResponseDTO(
+            order.OrderProducts.Select(op => new OrderProductSummaryDTO(
                 op.Id,
                 op.ProductId,
+                op.OrderId,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
         );
 
-        return CreatedAtAction(nameof(GetByOrderId), new { id = order.Id }, response);
+        return CreatedAtAction(nameof(GetByOrderId), new { id = order.Id }, responseDto);
     }
 
 
