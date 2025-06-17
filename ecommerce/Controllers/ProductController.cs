@@ -78,7 +78,7 @@ public class ProductController : ControllerBase
 
         var updated = await _productService.UpdateAsync(product);
         if (!updated)
-            return StatusCode(500, "Error on update product.");
+            return StatusCode(304, "Error on update product.");
 
         return NoContent();
     }
