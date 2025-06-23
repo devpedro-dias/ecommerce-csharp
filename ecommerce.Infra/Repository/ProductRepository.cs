@@ -1,4 +1,5 @@
-﻿using ecommerce.Domain.Entities;
+﻿using ecommerce.API.DTOs.Product;
+using ecommerce.Domain.Entities;
 using ecommerce.Domain.Interfaces.Repository;
 using ecommerce.Infra.Context;
 using ecommerce.Infra.Repository.DbConfig;
@@ -28,4 +29,38 @@ public class ProductRepository : RepositoryBaseConfig<Product>, IProductReposito
             .ToListAsync();
     }
 
+    public async Task<bool> UpdateWithStockAsync(Guid id, Product product)
+    {
+        var existingProduct = await GetByIdAsync(id);
+        if (existingProduct == null)
+            return false;
+
+        existingProduct.Name = product.Name;
+        existingProduct.Description = product.Description;
+        existingProduct.UnitPrice = product.UnitPrice;
+
+        if (existingProduct.Stock != null)
+        {
+            var existingStock = await _context.ProductStock
+                .FirstOrDefaultAsync(s => s.ProductId == existingProduct.Id);
+
+            if (existingStock != null)
+            {
+                existingStock.Quantity = product.Stock?.Quantity ?? 0;
+            }
+        }
+        else if (product.Stock != null)
+        {
+            var newStock = new ProductStock
+            {
+                ProductId = existingProduct.Id,
+                Quantity = product.Stock.Quantity
+            };
+            existingProduct.Stock = newStock;
+            _context.ProductStock.Add(newStock);
+        }
+
+        _context.Products.Update(existingProduct);
+        return await _context.SaveChangesAsync() > 0;
+    }
 }

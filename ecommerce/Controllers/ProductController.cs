@@ -68,22 +68,15 @@ public class ProductController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
-
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, ProductRequestDTO productDto)
     {
-        var product = new Product(productDto.Name, productDto.Description, productDto.UnitPrice)
-        {
-            Id = id
-        };
-
-        var updated = await _productService.UpdateAsync(product);
+        var updated = await _productService.UpdateAsync(id, productDto);
         if (!updated)
-            return StatusCode(304, "Error on update product.");
+            return NotFound();
 
         return NoContent();
     }
-
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
