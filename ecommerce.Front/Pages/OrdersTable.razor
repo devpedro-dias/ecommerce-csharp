@@ -1,0 +1,60 @@
+@using System.Text.Json
+@using ecommerce.API.DTOs.Response.Order
+@using ecommerce.API.DTOs.Response.Product
+@inject HttpClient Http
+
+<MudDataGrid T="OrderResponseDTO" Items="orders" Hover="true" Dense="true" FixedHeader="true" Loading="@isLoading">
+    <Columns>
+        <PropertyColumn Property="x => x.Id" Title="Order Id" />
+        <PropertyColumn Property="x => x.UserId" Title="User Id" />
+        <PropertyColumn Property="x => x.Date" Title="Date" />
+
+        
+
+    </Columns>
+</MudDataGrid>
+
+
+
+@code {
+    private List<OrderResponseDTO>? orders;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/Order");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                orders = JsonSerializer.Deserialize<List<OrderResponseDTO>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                // Agora orders está preenchido, pode iterar
+                foreach (var order in orders)
+                {
+                    Console.WriteLine($"Order {order.Id} tem {order.OrderProducts?.Count ?? 0} produtos");
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Erro HTTP: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                Console.WriteLine($"Conteúdo do erro: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao buscar pedidos: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+}

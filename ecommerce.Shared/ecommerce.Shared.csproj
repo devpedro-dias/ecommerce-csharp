@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="DTOs\NovaPasta\**" />
+    <EmbeddedResource Remove="DTOs\NovaPasta\**" />
+    <None Remove="DTOs\NovaPasta\**" />
+  </ItemGroup>
+
 </Project>

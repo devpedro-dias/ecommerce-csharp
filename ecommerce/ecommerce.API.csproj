@@ -7,14 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="NovaPasta\**" />
-    <Compile Remove="Utils\**" />
-    <Content Remove="NovaPasta\**" />
-    <Content Remove="Utils\**" />
-    <EmbeddedResource Remove="NovaPasta\**" />
-    <EmbeddedResource Remove="Utils\**" />
-    <None Remove="NovaPasta\**" />
-    <None Remove="Utils\**" />
+    <None Include="..\ecommerce.Front\Pages\OrdersTable.razor" Link="OrdersTable.razor" />
   </ItemGroup>
 
   <ItemGroup>

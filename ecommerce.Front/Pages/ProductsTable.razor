@@ -1,6 +1,5 @@
-﻿@using System.Text.Json
-@using ecommerce.API.DTOs.Response.Product
-@inject HttpClient Http
+﻿@using ecommerce.API.DTOs.Response.Product
+@inject ecommerce.Front.Services.ProductAPI ProductAPI
 
 <MudDataGrid Items="products" Hover="true" Dense="true" FixedHeader="true" Loading="@isLoading">
     <Columns>
@@ -17,32 +16,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var response = await Http.GetAsync("api/Product");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                products = JsonSerializer.Deserialize<List<ProductResponseDTO>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Erro HTTP: {(int)response.StatusCode} - {response.ReasonPhrase}");
-                Console.WriteLine($"Conteúdo do erro: {error}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erro ao buscar produtos: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        products = await ProductAPI.GetProductsAsync();
+        isLoading = false;
     }
 }

@@ -1,17 +1,19 @@
-﻿@inherits LayoutComponentBase
-<MudThemeProvider />
+﻿@using ScreenSound.Web.Layout
+@inherits LayoutComponentBase
+
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
 
-<div class="page">
-    <div class="sidebar">
+<MudLayout>
+    <MudDrawer Open="true" Elevation="2" class="top-0 h-100">
         <NavMenu />
-    </div>
+    </MudDrawer>
+    <MudMainContent class="main-content pa-10">
+        @Body
+    </MudMainContent>
+</MudLayout>
 
-    <main>
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@code {
+
+}

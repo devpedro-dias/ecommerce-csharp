@@ -1,0 +1,61 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using ecommerce.Front.Services
+
+@inject AuthAPI AuthAPI
+@inject NavigationManager navigationManager
+@attribute [AllowAnonymous]
+
+<MudPaper Class="px-8 pt-2 pb-4 mx-16 my-8" Justify="Justify.Center">
+
+    <AuthorizeView>
+        <Authorized>
+            <p class="mb-0 my-6">You are logged with @context.User.Identity.Name </p>
+        </Authorized>
+        <NotAuthorized>
+            <MudForm>
+                <p>Log in to use the application</p>
+
+                <MudTextField T="string" Label="Email" @bind-Value="email"
+                              Variant="Variant.Outlined" Class="my-4"
+                              Required="true" RequiredError="Email required!"
+                              OnlyValidateIfDirty="true" />
+
+                <MudTextField T="string" Label="Password" @bind-Value="password"
+                              InputType="InputType.Password"
+                              Variant="Variant.Outlined" Class="my-4"
+                              Required="true" RequiredError="Password Required!"
+                              OnlyValidateIfDirty="true" />
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           Class="my-6" @onclick="FazerLogin">
+                    Login
+                </MudButton>
+
+            </MudForm>
+        </NotAuthorized>
+    </AuthorizeView>
+
+
+</MudPaper>
+
+@code {
+    private string? email;
+    private string? password;
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private async Task FazerLogin()
+    {
+        var resposta = await AuthAPI.LoginAsync(email, password);
+        if (resposta.Sucesso)
+        {
+            if (ReturnUrl is not null)
+            {
+                navigationManager.NavigateTo(ReturnUrl);
+            }
+            ;
+        }
+    }
+}
