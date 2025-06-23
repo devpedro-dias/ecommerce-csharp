@@ -8,10 +8,11 @@
     </TitleContent>
 
     <DialogContent>
-        <MudForm @ref="_form" Model="_productModel" Validated="OnValidated">
+        <MudForm @ref="_form" Model="_productModel" @onsubmit="Submit" class="flex-column gap-4">
             <MudTextField Label="Product" @bind-Value="_productModel.Product" Required="true" />
             <MudTextField Label="Description" @bind-Value="_productModel.Description" Required="true" />
-            <MudNumericField T="decimal" Label="Unit Price" @bind-Value="_productModel.UnitPrice" Required="true" Adornment="Adornment.End" AdornmentText="R$" />
+            <MudNumericField T="decimal" Label="Unit Price" @bind-Value="_productModel.UnitPrice"
+                             Required="true" Immediate="true" Adornment="Adornment.End" AdornmentText="R$" />
             <MudNumericField T="int" Label="Stock Quantity" @bind-Value="_productModel.StockQuantity" Required="true" />
         </MudForm>
     </DialogContent>
@@ -33,11 +34,18 @@
     private ProductFormModel _productModel = new();
     private MudForm _form = default!;
     private bool _isSubmitting;
+    private bool _initialized = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (InitialData is not null)
+        if (firstRender && InitialData is not null && !_initialized)
+        {
             _productModel = InitialData;
+            _initialized = true;
+
+            await Task.Yield();
+            StateHasChanged();
+        }
     }
 
     private async Task Submit()

@@ -10,6 +10,7 @@
 <MudButton Variant="Variant.Filled" OnClick="OpenDialogAsync">New Product</MudButton>
 
 @code {
+    [Parameter] public EventCallback OnProductAdded { get; set; }
     private async Task OpenDialogAsync()
     {
         var parameters = new DialogParameters

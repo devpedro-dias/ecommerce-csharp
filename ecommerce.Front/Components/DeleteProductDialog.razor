@@ -1,0 +1,20 @@
+﻿@using MudBlazor
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Are you sure you want to delete <b>@ItemName</b>?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Delete">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string ItemName { get; set; } = string.Empty;
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Delete() => MudDialog.Close(DialogResult.Ok(true));
+}

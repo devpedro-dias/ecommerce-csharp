@@ -1,32 +1,143 @@
 ﻿@page "/products"
+@attribute [Authorize]
+
 @using Microsoft.AspNetCore.Authorization
+@using ecommerce.API.DTOs.Product
+@using ecommerce.API.DTOs.Response.Product
 @using ecommerce.Front.Components
 @using ecommerce.Front.Models
+@using ecommerce.Front.Services
 @using Microsoft.AspNetCore.Components
 @using MudBlazor
 
-@attribute [Authorize]
 @inject IDialogService DialogService
+@inject ProductAPI productAPI
+@inject ISnackbar snackbar
 
 <article>
     <MudBreadcrumbs Items="_items" Separator=">" />
-    <div class="d-flex justify-content-between align-items-center">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3>Products</h3>
             <p>Below is all your products available.</p>
         </div>
         <div>
-            <AddProductButton />
+            <AddProductButton OnProductAdded="LoadProductsAsync" />
         </div>
     </div>
 
-    <ProductsTable />
+    <MudDataGrid Items="products" Hover="true" Dense="true" FixedHeader="true" Loading="@isLoading">
+        <Columns>
+            <PropertyColumn Property="x => x.Name" Title="Product" />
+            <PropertyColumn Property="x => x.UnitPrice" Title="Unit Price" />
+            <PropertyColumn Property="x => x.Stock.Quantity" Title="Stock" />
+            <PropertyColumn Property="x => x.Description" Title="Description" />
+
+            <TemplateColumn T="ProductResponseDTO" Title="Actions">
+                <CellTemplate Context="context">
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                        <MudMenuItem OnClick="@(() => EditProduct(context.Item))">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-2" /> Edit
+                        </MudMenuItem>
+                        <MudMenuItem OnClick="@(() => DeleteProduct(context.Item))">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" Color="Color.Error" /> Delete
+                        </MudMenuItem>
+                    </MudMenu>
+                </CellTemplate>
+
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
 </article>
 
 @code {
-    private List<BreadcrumbItem> _items = [
+    private List<ProductResponseDTO> products = new();
+    private bool isLoading = true;
+
+    private List<BreadcrumbItem> _items = new()
+    {
         new("Home", href: "/"),
         new("Products", href: "/products")
-    ];
+    };
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        isLoading = true;
+        products = await productAPI.GetProductsAsync() ?? new();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task EditProduct(ProductResponseDTO product)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(ProductDialog.IsEditMode), true },
+            { nameof(ProductDialog.InitialData), new ProductFormModel
+                {
+                    Product = product.Name,
+                    Description = product.Description,
+                    UnitPrice = product.UnitPrice,
+                    StockQuantity = product.Stock.Quantity
+                }
+            }
+        };
+
+        var options = new DialogOptions { FullWidth = true };
+        var dialog = DialogService.Show<ProductDialog>("Edit Product", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is ProductFormModel edited)
+        {
+            var dto = new ProductRequestDTO(
+                Name: edited.Product,
+                Description: edited.Description,
+                UnitPrice: edited.UnitPrice,
+                StockQuantity: edited.StockQuantity
+            );
+
+            var success = await productAPI.UpdateProductAsync(product.Id, dto);
+            if (success)
+            {
+                await LoadProductsAsync();
+                snackbar.Add("Product updated successfully!", Severity.Success);
+            }
+            else
+            {
+                snackbar.Add("Failed to update product.", Severity.Error);
+            }
+        }
+    }
+
+    private async Task DeleteProduct(ProductResponseDTO product)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(DeleteProductDialog.ItemName), product.Name }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small };
+        var dialog = DialogService.Show<DeleteProductDialog>("Delete Product", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var success = await productAPI.DeleteProductAsync(product.Id);
+            if (success)
+            {
+                await LoadProductsAsync();
+                snackbar.Add("Product deleted successfully!", Severity.Success);
+            }
+            else
+            {
+                snackbar.Add("Failed to delete product.", Severity.Error);
+            }
+        }
+    }
 }

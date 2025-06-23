@@ -68,4 +68,31 @@ public class ProductAPI
         return false;
     }
 
+    public async Task<bool> UpdateProductAsync(Guid id, ProductRequestDTO request)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/Product/{id}", request);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao atualizar produto: {ex.Message}");
+            return false;
+        }
+    }
+    public async Task<bool> DeleteProductAsync(Guid id)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/Product/{id}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao deletar produto: {ex.Message}");
+            return false;
+        }
+    }
+
 }
