@@ -37,6 +37,7 @@
             if (success)
             {
                 snackbar.Add("Product created successfully!", Severity.Success);
+                await OnProductAdded.InvokeAsync();
             }
             else
             {
