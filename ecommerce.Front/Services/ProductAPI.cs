@@ -1,4 +1,6 @@
-﻿using ecommerce.API.DTOs.Response.Product;
+﻿using ecommerce.API.DTOs.Product;
+using ecommerce.API.DTOs.Response.Product;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace ecommerce.Front.Services;
@@ -40,4 +42,30 @@ public class ProductAPI
 
         return null;
     }
+
+    public async Task<bool> PostProductAsync(ProductRequestDTO request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/Product", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Erro ao criar produto: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                Console.WriteLine($"Detalhes: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exceção ao criar produto: {ex.Message}");
+        }
+
+        return false;
+    }
+
 }

@@ -1,0 +1,56 @@
+﻿@using MudBlazor
+@using ecommerce.Front.Models
+@inherits ComponentBase
+
+<MudDialog>
+    <TitleContent>
+        @(IsEditMode ? "Edit Product" : "New Product")
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="_form" Model="_productModel" Validated="OnValidated">
+            <MudTextField Label="Product" @bind-Value="_productModel.Product" Required="true" />
+            <MudTextField Label="Description" @bind-Value="_productModel.Description" Required="true" />
+            <MudNumericField T="decimal" Label="Unit Price" @bind-Value="_productModel.UnitPrice" Required="true" Adornment="Adornment.End" AdornmentText="R$" />
+            <MudNumericField T="int" Label="Stock Quantity" @bind-Value="_productModel.StockQuantity" Required="true" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="_isSubmitting">
+            @(IsEditMode ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public ProductFormModel? InitialData { get; set; }
+    [Parameter] public bool IsEditMode { get; set; }
+
+    private ProductFormModel _productModel = new();
+    private MudForm _form = default!;
+    private bool _isSubmitting;
+
+    protected override void OnInitialized()
+    {
+        if (InitialData is not null)
+            _productModel = InitialData;
+    }
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (_form.IsValid)
+        {
+            _isSubmitting = true;
+            MudDialog.Close(DialogResult.Ok(_productModel));
+        }
+    }
+
+
+    private void Cancel() => MudDialog.Cancel();
+}

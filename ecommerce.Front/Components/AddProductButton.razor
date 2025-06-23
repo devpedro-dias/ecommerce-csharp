@@ -1,0 +1,46 @@
+﻿@inject IDialogService DialogService
+@using MudBlazor
+@using ecommerce.API.DTOs.Product
+@using ecommerce.Front.Components
+@using ecommerce.Front.Models
+@using ecommerce.Front.Services
+@inject ProductAPI productAPI
+@inject ISnackbar snackbar
+
+<MudButton Variant="Variant.Filled" OnClick="OpenDialogAsync">New Product</MudButton>
+
+@code {
+    private async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(ProductDialog.IsEditMode), false },
+            { nameof(ProductDialog.InitialData), new ProductFormModel() }
+        };
+
+        var options = new DialogOptions();
+
+        var dialog = DialogService.Show<ProductDialog>("New Product", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data is ProductFormModel product)
+        {
+            var dto = new ProductRequestDTO(
+                Name: product.Product,
+                Description: product.Description,
+                UnitPrice: product.UnitPrice,
+                StockQuantity: product.StockQuantity
+            );
+
+            var success = await productAPI.PostProductAsync(dto);
+            if (success)
+            {
+                snackbar.Add("Product created successfully!", Severity.Success);
+            }
+            else
+            {
+                snackbar.Add("Failed to create product. Please try again.", Severity.Error);
+            }
+        }
+    }
+}

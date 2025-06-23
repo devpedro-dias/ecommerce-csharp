@@ -1,5 +1,6 @@
 ﻿@using ecommerce.API.DTOs.Response.Product
-@inject ecommerce.Front.Services.ProductAPI ProductAPI
+@using ecommerce.Front.Services
+@inject ProductAPI ProductAPI
 
 <MudDataGrid Items="products" Hover="true" Dense="true" FixedHeader="true" Loading="@isLoading">
     <Columns>

@@ -1,12 +1,21 @@
-﻿@using ScreenSound.Web.Layout
+﻿@using ecommerce.Front.Layout
 @inherits LayoutComponentBase
 
-<MudDialogProvider />
+<MudDialogProvider
+    FullWidth="true"
+    Position="DialogPosition.Center"
+/>
 <MudSnackbarProvider />
 <MudPopoverProvider />
+<MudSnackbarProvider 
+    MaxDisplayedSnackbars="3"
+    Position="SnackbarPosition.BottomRight"
+    PreventDuplicates="true" 
+/>
+
 
 <MudLayout>
-    <MudDrawer Open="true" Elevation="2" class="top-0 h-100">
+    <MudDrawer Open="true" Elevation="2">
         <NavMenu />
     </MudDrawer>
     <MudMainContent class="main-content pa-10">
