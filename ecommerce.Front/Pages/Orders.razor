@@ -11,7 +11,17 @@
 @inject OrderAPI orderAPI
 @inject IDialogService DialogService
 
-<MudText Typo="Typo.h4" Class="mb-4">Orders List</MudText>
+<MudBreadcrumbs Items="_items" Separator=">" Style="color: #00796B;" />
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <MudText Typo="Typo.h3" Class="mb-4">Orders</MudText>
+        <p>Below is all your orders.</p>
+    </div>
+    @* <div>
+        <AddOrderButton OnOrderAdded="LoadOrdersAsync" />
+    </div> *@
+</div>
 
 <MudDataGrid @ref="_dataGrid" T="OrderResponseDTO"
              ServerData="@ServerReload"
@@ -102,6 +112,11 @@
 </div>
 
 @code {
+    private List<BreadcrumbItem> _items = new()
+    {
+        new("Home", href: "/"),
+        new("Orders", href: "/orders")
+    };
 #nullable enable
     public static string __description__ = "Orders DataGrid with Nested Groupable Products Grid and Hierarchy Column";
 

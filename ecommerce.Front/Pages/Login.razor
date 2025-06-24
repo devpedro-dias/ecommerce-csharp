@@ -60,11 +60,13 @@
             {
                 if (ReturnUrl is not null)
                 {
+                    // Se houver uma ReturnUrl, navegue para ela
                     navigationManager.NavigateTo(ReturnUrl);
                 }
                 else
                 {
-                    navigationManager.NavigateTo("/");
+                    // Se não houver ReturnUrl, navegue para /products
+                    navigationManager.NavigateTo("/products");
                 }
             }
         }
