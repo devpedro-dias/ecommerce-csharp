@@ -2,11 +2,14 @@
 @using MudBlazor
 @using MudBlazor.Utilities
 @using ecommerce.API.DTOs.Response.Order
+@using ecommerce.Front.Components
 @using ecommerce.Shared.DTOs.Response.Order
 @using ecommerce.Front.Services
 @using System.Linq
 @using System.Reflection
+@inject ISnackbar snackbar
 @inject OrderAPI orderAPI
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" Class="mb-4">Lista de Pedidos</MudText>
 
@@ -35,6 +38,16 @@
         <HierarchyColumn T="OrderResponseDTO" EnableHeaderToggle="@_enableHeaderToggle" />
         <PropertyColumn Property="x => x.Date" Title="Data do Pedido" Format="d" Sortable="true" />
         <PropertyColumn Property="x => x.OrderProducts.Sum(op => op.TotalPrice)" Title="Valor Total do Pedido" Format="C" Sortable="true" />
+
+        <TemplateColumn T="OrderResponseDTO" Title="Actions">
+            <CellTemplate Context="order">
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                    <MudMenuItem OnClick="@(() => DeleteOrder(order.Item))">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" Color="Color.Error" /> Delete
+                    </MudMenuItem>
+                </MudMenu>
+            </CellTemplate>
+        </TemplateColumn>
     </Columns>
     <ChildRowContent>
         <MudTd>
@@ -192,6 +205,32 @@
         return currentObject;
     }
 
+    private async Task DeleteOrder(OrderResponseDTO order)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(DeleteOrderDialog.ItemName), $"Pedido {order.Id}" }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small };
+        var dialog = DialogService.Show<DeleteOrderDialog>("Delete Order", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var success = await orderAPI.DeleteOrderAsync(order.Id);
+
+            if (success)
+            {
+                await _dataGrid.ReloadServerData();
+                snackbar.Add("Order deleted succesfully!", Severity.Success);
+            }
+            else
+            {
+                snackbar.Add("Error deleting order.", Severity.Error);
+            }
+        }
+    }
 
     private Task ExpandAllHierarchyAsync()
     {
