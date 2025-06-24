@@ -1,31 +1,215 @@
 ﻿@page "/orders"
-@using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@using MudBlazor
+@using MudBlazor.Utilities
+@using ecommerce.API.DTOs.Response.Order
+@using ecommerce.Shared.DTOs.Response.Order
+@using ecommerce.Front.Services
+@using System.Linq
+@using System.Reflection
+@inject OrderAPI orderAPI
 
-<article>
-    <MudBreadcrumbs Items="_items" Separator=">" />
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex flex-column gap-4">
-            <div>
-                <h3>Orders</h3>
-                <p>Below is all your orders.</p>
-            </div>
-        </div>
-        <div>
-            <MudButton Variant="Variant.Filled">
-                Create Order
-            </MudButton>
-        </div>
-    </div>
+<MudText Typo="Typo.h4" Class="mb-4">Lista de Pedidos</MudText>
 
-    <div>
-        <OrdersTable />
-    </div>
-</article>
+<MudDataGrid @ref="_dataGrid" T="OrderResponseDTO"
+             ServerData="@ServerReload"
+             Hover FixedHeader Groupable="true"
+             ReadOnly="@_isReadOnly"
+             ExpandSingleRow="@_expandSingleRow">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Informações dos Pedidos</MudText>
+        <MudSpacer />
+        <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Filtrar Pedidos"
+                      @bind-Value="_searchString" @bind-Value:after="@(() => _dataGrid.ReloadServerData())"
+                      DebounceInterval="300" Variant="Variant.Outlined" Clearable />
+    </ToolBarContent>
+    <GroupTemplate>
+        <span style="font-weight:bold">
+            Pedido ID: @context.Grouping.Key - Data: @(((OrderResponseDTO)context.Grouping.First()).Date.ToShortDateString())
+            <MudChip Size="Size.Small" Color="Color.Primary" Class="ml-2">
+                Total de Produtos no Grupo: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Count())
+                - Valor Total do Pedido no Grupo: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Sum(op => op.TotalPrice)).ToString("C")
+            </MudChip>
+        </span>
+    </GroupTemplate>
+    <Columns>
+        <HierarchyColumn T="OrderResponseDTO" EnableHeaderToggle="@_enableHeaderToggle" />
+        <PropertyColumn Property="x => x.Date" Title="Data do Pedido" Format="d" Sortable="true" />
+        <PropertyColumn Property="x => x.OrderProducts.Sum(op => op.TotalPrice)" Title="Valor Total do Pedido" Format="C" Sortable="true" />
+    </Columns>
+    <ChildRowContent>
+        <MudTd>
+            <MudDataGrid T="OrderProductSummaryDTO"
+                            Items="@(((OrderResponseDTO)context.Item).OrderProducts)"
+                            Groupable="true"
+                            Dense="true" Bordered="true" FixedHeader="true" Width="100%">
+                <GroupTemplate Context="orderProduct">
+                    <span style="font-weight:bold">
+                        Produto ID (Agrupado): @orderProduct.Grouping.Key.ToString().Substring(0, 8)...
+                        <MudChip Size="Size.Small" Color="Color.Secondary" Class="ml-2">
+                            Quantidade Total deste Produto: @orderProduct.Grouping.Sum(p => p.Quantity)
+                        </MudChip>
+                    </span>
+                </GroupTemplate>
+                <Columns>
+                    <PropertyColumn Property="op => op.ProductId" Title="ID do Produto" Groupable="true" />
+                    <PropertyColumn Property="op => op.Quantity" Title="Quantidade" />
+                    <TemplateColumn Title="Preço Unitário">
+                        <CellTemplate Context="productContext">
+                            @(productContext.Item.Quantity != 0 ? (productContext.Item.TotalPrice / productContext.Item.Quantity).ToString("C") : "0")
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="op => op.TotalPrice" Title="Preço Total do Item" Format="C" />
+                </Columns>
+                <NoRecordsContent>
+                    <MudText>Nenhum produto neste pedido.</MudText>
+                </NoRecordsContent>
+            </MudDataGrid>
+        </MudTd>
+    </ChildRowContent>
+    <NoRecordsContent>
+        <MudText>Nenhum pedido encontrado.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Carregando pedidos...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudDataGridPager T="OrderResponseDTO" />
+    </PagerContent>
+</MudDataGrid>
+
+<div class="d-flex flex-wrap mt-4">
+    <MudSwitch T="bool" @bind-Value="_expandSingleRow" Label="Expandir apenas uma linha por vez" Color="@Color.Primary" />
+    <MudSwitch T="bool" @bind-Value="_enableHeaderToggle" Label="Habilitar botão de expansão no cabeçalho" Color="@Color.Primary" />
+    <MudButton OnClick="@ExpandAllHierarchyAsync">Expandir Todos os Pedidos</MudButton>
+    <MudButton OnClick="@CollapseAllHierarchyAsync">Retrair Todos os Pedidos</MudButton>
+</div>
 
 @code {
-    private List<BreadcrumbItem> _items = [
-        new("Home", href: "#"),
-        new("Orders", href: "/orders")
-    ];
+#nullable enable
+    public static string __description__ = "Orders DataGrid with Nested Groupable Products Grid and Hierarchy Column";
+
+    private MudDataGrid<OrderResponseDTO> _dataGrid = null!;
+    private string? _searchString = string.Empty;
+    private List<OrderResponseDTO> _orders = new();
+
+    private bool _isReadOnly = true;
+    private bool _expandSingleRow = false;
+    private bool _enableHeaderToggle = false;
+
+    private async Task<GridData<OrderResponseDTO>> ServerReload(GridState<OrderResponseDTO> state)
+    {
+        _orders = await orderAPI.GetOrdersAsync();
+
+        var query = _orders.AsEnumerable();
+
+        query = query.Where(x => MatchesSearch(x, _searchString));
+
+        if (state.SortDefinitions.Any())
+        {
+            IOrderedEnumerable<OrderResponseDTO>? orderedQuery = null;
+            foreach (var sort in state.SortDefinitions)
+            {
+                if (orderedQuery == null)
+                {
+                    orderedQuery = sort.Descending
+                        ? query.OrderByDescending(obj => GetPropertyValue(obj, sort.SortBy.ToString()))
+                        : query.OrderBy(obj => GetPropertyValue(obj, sort.SortBy.ToString()));
+                }
+                else
+                {
+                    orderedQuery = sort.Descending
+                        ? orderedQuery.ThenByDescending(obj => GetPropertyValue(obj, sort.SortBy.ToString()))
+                        : orderedQuery.ThenBy(obj => GetPropertyValue(obj, sort.SortBy.ToString()));
+                }
+            }
+            query = orderedQuery!;
+        }
+
+        var totalItems = query.Count();
+        var pagedData = query.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
+
+        return new()
+        {
+            TotalItems = totalItems,
+            Items = pagedData
+        };
+    }
+
+    private bool MatchesSearch(OrderResponseDTO order, string? searchString)
+    {
+        if (string.IsNullOrEmpty(searchString))
+        {
+            return true;
+        }
+
+        return order.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+               order.UserId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+               order.Date.ToShortDateString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+               order.OrderProducts.Any(op => op.ProductId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                                            op.Quantity.ToString().Contains(searchString) ||
+                                            op.TotalPrice.ToString().Contains(searchString));
+    }
+
+    private static object? GetPropertyValue<T>(T obj, string propertyName)
+    {
+        if (propertyName.Contains("OrderProducts.Sum(op => op.TotalPrice)"))
+        {
+            if (obj is OrderResponseDTO order)
+            {
+                return order.OrderProducts.Sum(op => op.TotalPrice);
+            }
+        }
+
+        propertyName = propertyName.Replace("x => ", "").Replace("op => ", "");
+
+        var parts = propertyName.Split('.');
+        object? currentObject = obj;
+
+        foreach (var part in parts)
+        {
+            if (currentObject == null) return null;
+
+            var actualPart = part.Contains("(") ? part.Substring(0, part.IndexOf('(')) : part;
+
+            PropertyInfo? property = currentObject.GetType().GetProperty(actualPart);
+            if (property == null)
+            {
+                FieldInfo? field = currentObject.GetType().GetField(actualPart);
+                if (field != null)
+                {
+                    currentObject = field.GetValue(currentObject);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                currentObject = property.GetValue(currentObject);
+            }
+        }
+        return currentObject;
+    }
+
+
+    private Task ExpandAllHierarchyAsync()
+    {
+        return _dataGrid.ExpandAllHierarchy();
+    }
+
+    private Task CollapseAllHierarchyAsync()
+    {
+        return _dataGrid.CollapseAllHierarchy();
+    }
+
+    private Task ExpandAllMainGridGroupsAsync()
+    {
+        return _dataGrid.ExpandAllGroupsAsync();
+    }
+
+    private Task CollapseAllMainGridGroupsAsync()
+    {
+        return _dataGrid.CollapseAllGroupsAsync();
+    }
 }
