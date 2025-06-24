@@ -15,12 +15,12 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <MudText Typo="Typo.h3" Class="mb-4">Orders</MudText>
+        <MudText Typo="Typo.h6" Class="mb-4">Orders</MudText>
         <p>Below is all your orders.</p>
     </div>
-    @* <div>
-        <AddOrderButton OnOrderAdded="LoadOrdersAsync" />
-    </div> *@
+    <div>
+        <AddOrderButton OnOrderAdded="HandleOrderAdded" />
+    </div>
 </div>
 
 <MudDataGrid @ref="_dataGrid" T="OrderResponseDTO"
@@ -31,7 +31,7 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Orders Details</MudText>
         <MudSpacer />
-        <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Filtrar Pedidos"
+        <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Order filter"
                       @bind-Value="_searchString" @bind-Value:after="@(() => _dataGrid.ReloadServerData())"
                       DebounceInterval="300" Variant="Variant.Outlined" Clearable />
     </ToolBarContent>
@@ -62,9 +62,9 @@
     <ChildRowContent>
         <MudTd>
             <MudDataGrid T="OrderProductSummaryDTO"
-                            Items="@(((OrderResponseDTO)context.Item).OrderProducts)"
-                            Groupable="true"
-                            Dense="true" Bordered="true" FixedHeader="true" Width="100%">
+                         Items="@(((OrderResponseDTO)context.Item).OrderProducts)"
+                         Groupable="true"
+                         Dense="true" Bordered="true" FixedHeader="true" Width="100%">
                 <GroupTemplate Context="orderProduct">
                     <span style="font-weight:bold">
                         Product ID: @orderProduct.Grouping.Key.ToString().Substring(0, 8)...
@@ -127,10 +127,29 @@
     private bool _isReadOnly = true;
     private bool _expandSingleRow = false;
     private bool _enableHeaderToggle = false;
+    private bool _isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        _isLoading = true;
+        _orders = await orderAPI.GetOrdersAsync() ?? new();
+        _isLoading = false;
+    }
+
+    private async Task HandleOrderAdded()
+    {
+        await _dataGrid.ReloadServerData();
+        snackbar.Add("Order added successfully!", Severity.Success);
+    }
 
     private async Task<GridData<OrderResponseDTO>> ServerReload(GridState<OrderResponseDTO> state)
     {
-        _orders = await orderAPI.GetOrdersAsync();
+        await LoadOrdersAsync();
 
         var query = _orders.AsEnumerable();
 
@@ -178,8 +197,8 @@
                order.UserId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                order.Date.ToShortDateString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                order.OrderProducts.Any(op => op.ProductId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-                                            op.Quantity.ToString().Contains(searchString) ||
-                                            op.TotalPrice.ToString().Contains(searchString));
+                                             op.Quantity.ToString().Contains(searchString) ||
+                                             op.TotalPrice.ToString().Contains(searchString));
     }
 
     private static object? GetPropertyValue<T>(T obj, string propertyName)
@@ -228,7 +247,7 @@
     {
         var parameters = new DialogParameters
         {
-            { nameof(DeleteOrderDialog.ItemName), $"Pedido {order.Id}" }
+            { nameof(DeleteOrderDialog.ItemName), $"{order.Id}"}
         };
 
         var options = new DialogOptions { MaxWidth = MaxWidth.Small };

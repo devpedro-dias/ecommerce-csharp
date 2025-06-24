@@ -1,0 +1,63 @@
+﻿@using MudBlazor
+@using ecommerce.API.DTOs.Product
+@using ecommerce.API.DTOs.Request.Order
+@using ecommerce.API.DTOs.Request.OrderProducts
+@using ecommerce.Front.Components
+@using ecommerce.Front.Models
+@using ecommerce.Front.Services
+@inject IDialogService DialogService
+@inject OrderAPI OrderAPI
+@inject ProductAPI productAPI
+@inject ISnackbar Snackbar
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenOrderDialogAsync">
+    New Order
+</MudButton>
+
+@code {
+    [Parameter] public EventCallback OnOrderAdded { get; set; }
+
+    private async Task OpenOrderDialogAsync()
+    {
+        var products = await productAPI.GetProductsAsync();
+        if (products == null || !products.Any())
+        {
+            Snackbar.Add("Is not possible to add the product to order. Try again later.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { nameof(OrderDialog.AvailableProducts), products }
+        };
+
+        var options = new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Medium };
+
+        var dialog = DialogService.Show<OrderDialog>("Create New Order", parameters, options);
+
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data is List<OrderItemFormModel> selectedItems)
+        {
+            if (selectedItems.Any())
+            {
+                var orderRequestDto = new OrderRequestDTO(
+                    Date: DateTime.UtcNow,
+                    OrderProducts: selectedItems.Select(item => new OrderProductsRequestDTO(
+                        ProductId: item.ProductId!.Value,
+                        Quantity: item.Quantity
+                    )).ToList()
+                );
+
+                var success = await OrderAPI.PostOrderAsync(orderRequestDto);
+                if (success)
+                {
+                    await OnOrderAdded.InvokeAsync();
+                }
+            }
+            else
+            {
+                Snackbar.Add("No items are added to order", Severity.Warning);
+            }
+        }
+    }
+}

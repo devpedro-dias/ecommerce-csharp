@@ -1,0 +1,177 @@
+﻿@using MudBlazor
+@using ecommerce.API.DTOs.Product
+@using ecommerce.API.DTOs.Response.Product
+@using ecommerce.Front.Models
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AddShoppingCart" Class="mr-3" /> @Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_formIsValid" @bind-Errors="_formErrors">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="Guid" Label="Select a Product"
+                               @bind-Value="_selectedProductId"
+                               Required="true" RequiredError="Product is required!"
+                               Clearable="true"
+                               @onchange="OnProductSelectionChanged">
+                        @foreach (var product in AvailableProducts)
+                        {
+                            <MudSelectItem Value="@product.Id">@product.Name (@product.UnitPrice.ToString("C"))</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField Label="Quantity"
+                                     @bind-Value="CurrentOrderItem.Quantity"
+                                     Required="true" RequiredError="Quantity is required!"
+                                     Min="1" Step="1"
+                                     Adornment="Adornment.End" AdornmentText="un" />
+                </MudItem>
+                <MudItem xs="12" md="2" Class="d-flex align-center">
+                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
+                               OnClick="AddItemToOrder"
+                               Disabled="@(!_formIsValid || _selectedProductId == Guid.Empty || CurrentOrderItem.Quantity <= 0)">
+                        Add
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        @if (OrderedItems.Any())
+        {
+            <MudTable T="OrderItemFormModel" Items="@OrderedItems" Hover="true" Class="mt-4">
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Unit Price</MudTh>
+                    <MudTh>Quantity</MudTh>
+                    <MudTh>Subtotal</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Product">@context.ProductName</MudTd>
+                    <MudTd DataLabel="Unit Price">@context.UnitPrice.ToString("C")</MudTd>
+                    <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
+                    <MudTd DataLabel="Subtotal">@context.Subtotal.ToString("C")</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       OnClick="@(() => RemoveItemFromOrder(context))" Color="Color.Error" />
+                    </MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTd colspan="5" Class="text-right">
+                        <MudText Typo="Typo.h6">Total: @OrderTotal.ToString("C")</MudText>
+                    </MudTd>
+                </FooterContent>
+            </MudTable>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mt-4">No items added to order yet.</MudText>
+        }
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@(!OrderedItems.Any())">
+            Create Order
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Title { get; set; } = "Create New Order";
+    [Parameter] public List<ProductResponseDTO> AvailableProducts { get; set; } = new List<ProductResponseDTO>();
+
+    private MudForm _form = default!;
+    private bool _formIsValid;
+    private string[] _formErrors = Array.Empty<string>();
+
+    private Guid _selectedProductId;
+    private OrderItemFormModel CurrentOrderItem { get; set; } = new OrderItemFormModel();
+    private List<OrderItemFormModel> OrderedItems { get; set; } = new List<OrderItemFormModel>();
+
+    private decimal OrderTotal => OrderedItems.Sum(item => item.Subtotal);
+
+    protected override void OnInitialized()
+    {
+        _selectedProductId = Guid.Empty;
+        CurrentOrderItem = new OrderItemFormModel();
+    }
+
+    private void OnProductSelectionChanged(ChangeEventArgs args)
+    {
+        _form.Validate();
+    }
+
+    private async Task AddItemToOrder()
+    {
+        await _form.Validate();
+        if (!_formIsValid)
+        {
+            Snackbar.Add("Por favor, preencha o produto e a quantidade corretamente.", Severity.Error);
+            return;
+        }
+
+        var selectedProductDetails = AvailableProducts.FirstOrDefault(p => p.Id == _selectedProductId);
+
+        if (selectedProductDetails == null)
+        {
+            Snackbar.Add("Produto selecionado não encontrado ou inválido.", Severity.Error);
+            return;
+        }
+
+        var existingItem = OrderedItems.FirstOrDefault(i => i.ProductId == selectedProductDetails.Id);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += CurrentOrderItem.Quantity;
+            existingItem.UnitPrice = selectedProductDetails.UnitPrice;
+            Snackbar.Add($"Quantidade do item '{existingItem.ProductName}' atualizada.", Severity.Info);
+        }
+        else
+        {
+            OrderedItems.Add(new OrderItemFormModel
+            {
+                ProductId = selectedProductDetails.Id,
+                ProductName = selectedProductDetails.Name,
+                UnitPrice = selectedProductDetails.UnitPrice,
+                Quantity = CurrentOrderItem.Quantity
+            });
+            Snackbar.Add($"'{selectedProductDetails.Name}' adicionado à ordem.", Severity.Success);
+        }
+
+        CurrentOrderItem = new OrderItemFormModel();
+        _selectedProductId = Guid.Empty;
+        await _form.ResetAsync();
+        StateHasChanged();
+    }
+
+    private void RemoveItemFromOrder(OrderItemFormModel itemToRemove)
+    {
+        OrderedItems.Remove(itemToRemove);
+        Snackbar.Add($"Item '{itemToRemove.ProductName}' removido da ordem.", Severity.Warning);
+        StateHasChanged();
+    }
+
+    private void Submit()
+    {
+        if (!OrderedItems.Any())
+        {
+            Snackbar.Add("A ordem deve conter pelo menos um item.", Severity.Error);
+            return;
+        }
+        MudDialog.Close(DialogResult.Ok(OrderedItems));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public void Dispose()
+    {
+    }
+}
