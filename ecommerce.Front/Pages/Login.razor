@@ -7,15 +7,15 @@
 @inject NavigationManager navigationManager
 @attribute [AllowAnonymous]
 
-<MudPaper Class="px-8 pt-2 pb-4 mx-16 my-8" Justify="Justify.Center">
+<MudPaper Class="px-8 pt-4 pb-4 mx-16 my-8" Justify="Justify.Center">
 
     <AuthorizeView>
         <Authorized>
-            <p class="mb-0 my-6">You are logged with @context.User.Identity.Name </p>
+            <MudText class="mb-0 my-6">You are logged with @context.User.Identity.Name </MudText>
         </Authorized>
         <NotAuthorized>
             <MudForm>
-                <p>Log in to use the application</p>
+                <MudText>Log in to use the application</MudText>
 
                 <MudTextField T="string" Label="Email" @bind-Value="email"
                               Variant="Variant.Outlined" Class="my-4"
@@ -29,33 +29,52 @@
                               OnlyValidateIfDirty="true" />
 
                 <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           Class="my-6" @onclick="FazerLogin">
-                    Login
+                           Class="my-6" @onclick="FazerLogin" Disabled="@_processing">
+                    @(_processing ? "Processing..." : "Login")
                 </MudButton>
-
             </MudForm>
+            <div class="d-flex gap-2">
+                <MudText class="text-center">Do not have an account?</MudText>
+                <MudLink Href="/register">Sign up here</MudLink>
+            </div>
         </NotAuthorized>
     </AuthorizeView>
-
-
 </MudPaper>
 
 @code {
     private string? email;
     private string? password;
+    private bool _processing = false;
+
     [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
 
     private async Task FazerLogin()
     {
-        var resposta = await AuthAPI.LoginAsync(email, password);
-        if (resposta.Sucesso)
+        _processing = true;
+
+        try
         {
-            if (ReturnUrl is not null)
+            var resposta = await AuthAPI.LoginAsync(email, password);
+            if (resposta.Sucesso)
             {
-                navigationManager.NavigateTo(ReturnUrl);
+                if (ReturnUrl is not null)
+                {
+                    navigationManager.NavigateTo(ReturnUrl);
+                }
+                else
+                {
+                    navigationManager.NavigateTo("/");
+                }
             }
-            ;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            _processing = false;
         }
     }
 }

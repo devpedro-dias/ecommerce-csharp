@@ -1,0 +1,135 @@
+﻿@page "/register"
+@using Microsoft.AspNetCore.Authorization
+@using ecommerce.Front.Services
+@inject AuthAPI authAPI
+@inject NavigationManager NavigationManager
+@inject ISnackbar snackbar
+@attribute [AllowAnonymous]
+
+<MudPaper Class="px-8 pt-4 pb-4 mx-16 my-8" Justify="Justify.Center">
+    <MudForm @ref="form">
+        <MudText>Create your account to start using the application!</MudText>
+
+        <MudTextField T="string" Label="Email" @bind-Value="email"
+                      Variant="Variant.Outlined" Class="my-4"
+                      Required="true" RequiredError="Email is required!"
+                      OnlyValidateIfDirty="true"
+                      Validation="@(new Func<string, string>(EmailValidation))" />
+
+        <MudTextField T="string" Label="Password" @bind-Value="password"
+                      InputType="InputType.Password"
+                      Variant="Variant.Outlined" Class="my-4"
+                      Required="true" RequiredError="Password is required!"
+                      OnlyValidateIfDirty="true"
+                      Validation="@(new Func<string, string>(PasswordValidation))" />
+
+        <MudTextField T="string" Label="Confirm Password" @bind-Value="confirmPassword"
+                      InputType="InputType.Password"
+                      Variant="Variant.Outlined" Class="my-4"
+                      Required="true" RequiredError="Password confirmation is required!"
+                      OnlyValidateIfDirty="true"
+                      Validation="@(new Func<string, string>(ConfirmPasswordValidation))" />
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudText Color="Color.Error" Class="my-2">@errorMessage</MudText>
+        }
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Class="my-6" OnClick="RegisterUser" Disabled="@_processing">
+            @(_processing ? "Processing..." : "Register")
+        </MudButton>
+
+        <div class="d-flex gap-2">
+            <MudText Class="text-center">Already have an account?</MudText>
+            <MudLink Href="/login">Log in here.</MudLink>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private string? email;
+    private string? password;
+    private string? confirmPassword;
+    private string? errorMessage;
+    private bool _processing = false;
+
+    private MudForm? form;
+
+    private string EmailValidation(string emailValue)
+    {
+        if (string.IsNullOrWhiteSpace(emailValue))
+            return "Email is required!";
+        if (!emailValue.Contains("@") || !emailValue.Contains("."))
+            return "Invalid email format!";
+        return string.Empty;
+    }
+
+    private string PasswordValidation(string passwordValue)
+    {
+        if (string.IsNullOrWhiteSpace(passwordValue))
+            return "Password is required!";
+        if (passwordValue.Length < 6)
+            return "Password must be at least 6 characters long.";
+        return string.Empty;
+    }
+
+    private string ConfirmPasswordValidation(string confirmPasswordValue)
+    {
+        if (string.IsNullOrWhiteSpace(confirmPasswordValue))
+            return "Password confirmation is required!";
+        if (confirmPasswordValue != password)
+            return "Passwords do not match!";
+        return string.Empty;
+    }
+
+    private async Task RegisterUser()
+    {
+        errorMessage = string.Empty;
+        await form!.Validate();
+
+        if (!form.IsValid)
+        {
+            errorMessage = "Please correct the errors in the form.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirmPassword))
+        {
+            errorMessage = "Email, password, and password confirmation are required.";
+            _processing = false;
+            return;
+        }
+
+        if (password != confirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            _processing = false;
+            return;
+        }
+
+        _processing = true;
+        try
+        {
+            var response = await authAPI.RegisterAsync(email, password);
+
+            if (response.Sucesso)
+            {
+                snackbar.Add("Registered succesfully", Severity.Success);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                snackbar.Add("Registration failed. Try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+}
