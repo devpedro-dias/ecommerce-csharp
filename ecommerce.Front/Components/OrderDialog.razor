@@ -2,7 +2,9 @@
 @using ecommerce.API.DTOs.Product
 @using ecommerce.API.DTOs.Response.Product
 @using ecommerce.Front.Models
+@using ecommerce.Front.Services 
 @inject ISnackbar Snackbar
+@inject ProductAPI productAPI
 @implements IDisposable
 
 <MudDialog>
@@ -20,7 +22,7 @@
                                Required="true" RequiredError="Product is required!"
                                Clearable="true"
                                @onchange="OnProductSelectionChanged">
-                        @foreach (var product in AvailableProducts)
+                        @foreach (var product in AvailableProducts.Where(p => p.Stock.Quantity > 0)) @* Filtered here *@
                         {
                             <MudSelectItem Value="@product.Id">@product.Name (@product.UnitPrice.ToString("C"))</MudSelectItem>
                         }
@@ -31,7 +33,8 @@
                                      @bind-Value="CurrentOrderItem.Quantity"
                                      Required="true" RequiredError="Quantity is required!"
                                      Min="1" Step="1"
-                                     Adornment="Adornment.End" AdornmentText="un" />
+                                     Adornment="Adornment.End" AdornmentText="un"
+                                     Max="@GetMaxQuantity()" /> @* Added Max quantity based on stock *@
                 </MudItem>
                 <MudItem xs="12" md="2" Class="d-flex align-center">
                     <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
@@ -99,10 +102,11 @@
 
     private decimal OrderTotal => OrderedItems.Sum(item => item.Subtotal);
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _selectedProductId = Guid.Empty;
         CurrentOrderItem = new OrderItemFormModel();
+        AvailableProducts = await productAPI.GetAvailableProductsAsync();
     }
 
     private void OnProductSelectionChanged(ChangeEventArgs args)
@@ -110,12 +114,18 @@
         _form.Validate();
     }
 
+    private int GetMaxQuantity()
+    {
+        var selectedProduct = AvailableProducts.FirstOrDefault(p => p.Id == _selectedProductId);
+        return selectedProduct?.Stock.Quantity ?? 1;
+    }
+
     private async Task AddItemToOrder()
     {
         await _form.Validate();
         if (!_formIsValid)
         {
-            Snackbar.Add("Por favor, preencha o produto e a quantidade corretamente.", Severity.Error);
+            Snackbar.Add("Please fill in the product and quantity correctly.", Severity.Error);
             return;
         }
 
@@ -123,16 +133,28 @@
 
         if (selectedProductDetails == null)
         {
-            Snackbar.Add("Produto selecionado não encontrado ou inválido.", Severity.Error);
+            Snackbar.Add("Selected product not found or invalid.", Severity.Error);
+            return;
+        }
+
+        if (CurrentOrderItem.Quantity > selectedProductDetails.Stock.Quantity)
+        {
+            Snackbar.Add($"Only {selectedProductDetails.Stock} units of '{selectedProductDetails.Name}' are available in stock.", Severity.Error);
             return;
         }
 
         var existingItem = OrderedItems.FirstOrDefault(i => i.ProductId == selectedProductDetails.Id);
         if (existingItem != null)
         {
+            if ((existingItem.Quantity + CurrentOrderItem.Quantity) > selectedProductDetails.Stock.Quantity)
+            {
+                Snackbar.Add($"Adding {CurrentOrderItem.Quantity} units would exceed available stock ({selectedProductDetails.Stock}). Current in order: {existingItem.Quantity}.", Severity.Warning);
+                return;
+            }
+
             existingItem.Quantity += CurrentOrderItem.Quantity;
             existingItem.UnitPrice = selectedProductDetails.UnitPrice;
-            Snackbar.Add($"Quantidade do item '{existingItem.ProductName}' atualizada.", Severity.Info);
+            Snackbar.Add($"Quantity of item '{existingItem.ProductName}' updated.", Severity.Info);
         }
         else
         {
@@ -143,7 +165,7 @@
                 UnitPrice = selectedProductDetails.UnitPrice,
                 Quantity = CurrentOrderItem.Quantity
             });
-            Snackbar.Add($"'{selectedProductDetails.Name}' adicionado à ordem.", Severity.Success);
+            Snackbar.Add($"'{selectedProductDetails.Name}' added to order.", Severity.Success);
         }
 
         CurrentOrderItem = new OrderItemFormModel();
@@ -155,7 +177,7 @@
     private void RemoveItemFromOrder(OrderItemFormModel itemToRemove)
     {
         OrderedItems.Remove(itemToRemove);
-        Snackbar.Add($"Item '{itemToRemove.ProductName}' removido da ordem.", Severity.Warning);
+        Snackbar.Add($"Item '{itemToRemove.ProductName}' removed from order.", Severity.Warning);
         StateHasChanged();
     }
 
@@ -163,7 +185,7 @@
     {
         if (!OrderedItems.Any())
         {
-            Snackbar.Add("A ordem deve conter pelo menos um item.", Severity.Error);
+            Snackbar.Add("Order must contain at least one item.", Severity.Error);
             return;
         }
         MudDialog.Close(DialogResult.Ok(OrderedItems));

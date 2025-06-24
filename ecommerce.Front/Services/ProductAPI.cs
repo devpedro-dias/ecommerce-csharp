@@ -14,6 +14,20 @@ public class ProductAPI
         _httpClient = factory.CreateClient("API");
     }
 
+    public async Task<List<ProductResponseDTO>> GetAvailableProductsAsync()
+    {
+        try
+        {
+            var products = await _httpClient.GetFromJsonAsync<List<ProductResponseDTO>>("api/Product");
+            
+            return products?.Where(p => p.Stock.Quantity > 0).ToList() ?? new List<ProductResponseDTO>();
+        }
+        catch
+        {
+            return new List<ProductResponseDTO>();
+        }
+    }
+
     public async Task<List<ProductResponseDTO>?> GetProductsAsync()
     {
         try

@@ -43,10 +43,11 @@ public class OrderService : ServiceBaseConfig<Order>, IOrderService
                 throw new Exception($"Product ID {item.ProductId} not found.");
 
             var productStock = await _productStockRepository.GetByProductIdAsync(item.ProductId);
+
             if (productStock == null)
                 throw new Exception($"Stock not found for product '{product.Name}'.");
 
-            if (productStock.Quantity < item.Quantity)
+            if (productStock.Quantity < item.Quantity || productStock.Quantity == 0)
                 throw new Exception($"Insufficient stock for product '{product.Name}'.");
 
             productStock.Quantity -= item.Quantity;
