@@ -8,4 +8,5 @@ public interface IOrderService : IServiceBaseConfig<Order>
 {
     public Task<Order> CreateOrderWithProductsAsync(string userId, DateTime date, List<OrderProductsRequestDTO> orderProducts);
     public Task<List<Order>> GetByUserIdAsync(string userId);
+    Task<bool> DeleteOrderAndRestoreStockAsync(Guid orderId);
 }

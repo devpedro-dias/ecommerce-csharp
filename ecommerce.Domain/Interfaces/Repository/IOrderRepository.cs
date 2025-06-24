@@ -5,5 +5,6 @@ namespace ecommerce.Domain.Interfaces.Repository;
 
 public interface IOrderRepository : IRepositoryBaseConfig<Order>
 {
-    Task<List<Order>> GetByUserIdAsync(string userId); 
+    Task<List<Order>> GetByUserIdAsync(string userId);
+    Task<Order?> GetOrderWithProductsAndStockAsync(Guid orderId);
 }

@@ -110,16 +110,32 @@ public class OrderController : ControllerBase
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (!User.Identity.IsAuthenticated || string.IsNullOrEmpty(userId)) return Unauthorized();
+        if (!User.Identity.IsAuthenticated || string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
 
-        var order = await _orderService.GetByIdAsync(id);
+        var orderToCheckOwnership = await _orderService.GetByIdAsync(id);
 
-        if (order == null) return NotFound();
+        if (orderToCheckOwnership == null)
+        {
+            return NotFound();
+        }
 
-        if (order.UserId != userId) return Forbid();
+        if (orderToCheckOwnership.UserId != userId)
+        {
+            return Forbid();
+        }
 
-        await _orderService.DeleteAsync(order);
+        var success = await _orderService.DeleteOrderAndRestoreStockAsync(id);
 
-        return NoContent();
+        if (success)
+        {
+            return NoContent();
+        }
+        else
+        {
+            return StatusCode(500, $"Error deleting order: {id} and restore stock.");
+        }
     }
 }

@@ -21,4 +21,13 @@ public class OrderRepository : RepositoryBaseConfig<Order>, IOrderRepository
             .Include(o => o.OrderProducts)
             .ToListAsync();
     }
+
+    public async Task<Order?> GetOrderWithProductsAndStockAsync(Guid orderId)
+    {
+        return await _context.Order
+            .Include(o => o.OrderProducts)
+            .ThenInclude(op => op.Product)
+            .ThenInclude(p => p.Stock)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+    }
 }

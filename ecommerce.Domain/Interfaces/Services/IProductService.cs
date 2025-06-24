@@ -7,4 +7,5 @@ namespace ecommerce.Domain.Interfaces.Services;
 public interface IProductService : IServiceBaseConfig<Product>
 {
     public Task<bool> UpdateAsync(Guid id, ProductRequestDTO productDto);
+    Task<bool> UpdateProductStockQuantityAsync(Guid productId, int quantityChange);
 }

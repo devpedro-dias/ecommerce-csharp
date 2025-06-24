@@ -46,4 +46,18 @@ public class ProductService : ServiceBaseConfig<Product>, IProductService
 
         return await _productRepository.UpdateWithStockAsync(id, product);
     }
+
+    public async Task<bool> UpdateProductStockQuantityAsync(Guid productId, int quantityChange)
+    {
+        var product = await _productRepository.GetProductWithStockAsync(productId);
+
+        if (product == null || product.Stock == null)
+        {
+            return false;
+        }
+
+        product.Stock.Quantity += quantityChange;
+
+        return await _productRepository.UpdateAsync(product);
+    }
 }

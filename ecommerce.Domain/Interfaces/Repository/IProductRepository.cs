@@ -7,5 +7,6 @@ public interface IProductRepository : IRepositoryBaseConfig<Product>
 {
     Task<Product> GetByIdAsync(Guid id);
     Task<bool> UpdateWithStockAsync(Guid id, Product product);
+    Task<Product?> GetProductWithStockAsync(Guid productId);
 }
 

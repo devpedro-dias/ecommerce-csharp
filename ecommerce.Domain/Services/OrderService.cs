@@ -12,13 +12,15 @@ public class OrderService : ServiceBaseConfig<Order>, IOrderService
     protected readonly IOrderRepository _orderRepository;
     protected readonly IProductRepository _productRepository;
     protected readonly IProductStockRepository _productStockRepository;
+    protected readonly IProductService _productService;
 
-    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, IProductStockRepository productStockRepository)
+    public OrderService(IOrderRepository orderRepository, IProductRepository productRepository, IProductStockRepository productStockRepository, IProductService productService)
     : base(orderRepository)
     {
         _orderRepository = orderRepository;
         _productRepository = productRepository;
         _productStockRepository = productStockRepository;
+        _productService = productService;
     }
 
 
@@ -70,5 +72,38 @@ public class OrderService : ServiceBaseConfig<Order>, IOrderService
     public Task<List<Order>> GetByUserIdAsync(string userId)
     {
         return _orderRepository.GetByUserIdAsync(userId);
+    }
+
+    public async Task<bool> DeleteOrderAndRestoreStockAsync(Guid orderId)
+    {
+        var orderToDelete = await _orderRepository.GetOrderWithProductsAndStockAsync(orderId);
+
+        if (orderToDelete == null)
+        {
+            return false;
+        }
+
+        foreach (var orderProduct in orderToDelete.OrderProducts)
+        {
+            if (orderProduct.Product != null)
+            {
+                var stockUpdated = await _productService.UpdateProductStockQuantityAsync(orderProduct.ProductId, orderProduct.Quantity);
+
+                if (!stockUpdated)
+                {
+                   // Rollback or throw an exception on prod
+                    Console.WriteLine($"Atenção: Falha ao restaurar estoque para o produto ID: {orderProduct.ProductId}");
+                }
+            }
+        }
+
+        var simpleOrderToDelete = await _orderRepository.GetByIdAsync(orderId);
+        if (simpleOrderToDelete != null)
+        {
+            await _orderRepository.DeleteAsync(simpleOrderToDelete);
+            return true;
+        }
+
+        return false;
     }
 }

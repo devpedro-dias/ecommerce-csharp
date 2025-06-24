@@ -63,4 +63,10 @@ public class ProductRepository : RepositoryBaseConfig<Product>, IProductReposito
         _context.Products.Update(existingProduct);
         return await _context.SaveChangesAsync() > 0;
     }
+    public async Task<Product?> GetProductWithStockAsync(Guid productId)
+    {
+        return await _context.Products
+            .Include(p => p.Stock)
+            .FirstOrDefaultAsync(p => p.Id == productId);
+    }
 }
