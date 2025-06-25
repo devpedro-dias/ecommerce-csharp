@@ -39,6 +39,7 @@ public class OrderController : ControllerBase
                 op.Id,
                 op.ProductId,
                 op.OrderId,
+                op.Product.Name,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
@@ -70,6 +71,7 @@ public class OrderController : ControllerBase
                 op.Id,
                 op.ProductId,
                 op.OrderId,
+                op.Product.Name,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
@@ -96,6 +98,7 @@ public class OrderController : ControllerBase
                 op.Id,
                 op.ProductId,
                 op.OrderId,
+                op.Product.Name,
                 op.Quantity,
                 op.TotalPrice
             )).ToList()
