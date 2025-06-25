@@ -17,14 +17,14 @@
         <MudForm @ref="_form" @bind-IsValid="_formIsValid" @bind-Errors="_formErrors">
             <MudGrid>
                 <MudItem xs="12" md="6">
-                    <MudSelect T="Guid" Label="Select a Product"
+                    <MudSelect T="Guid?" Label="Select a Product"
                                @bind-Value="_selectedProductId"
                                Required="true" RequiredError="Product is required!"
                                Clearable="true"
                                @onchange="OnProductSelectionChanged">
-                        @foreach (var product in AvailableProducts.Where(p => p.Stock.Quantity > 0)) @* Filtered here *@
+                        @foreach (var product in AvailableProducts.Where(p => p.Stock.Quantity > 0))
                         {
-                            <MudSelectItem Value="@product.Id">@product.Name (@product.UnitPrice.ToString("C"))</MudSelectItem>
+                            <MudSelectItem Value="@((Guid?)product.Id)">@product.Name (@product.UnitPrice.ToString("C"))</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -96,7 +96,7 @@
     private bool _formIsValid;
     private string[] _formErrors = Array.Empty<string>();
 
-    private Guid _selectedProductId;
+    private Guid? _selectedProductId;
     private OrderItemFormModel CurrentOrderItem { get; set; } = new OrderItemFormModel();
     private List<OrderItemFormModel> OrderedItems { get; set; } = new List<OrderItemFormModel>();
 
@@ -104,7 +104,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _selectedProductId = Guid.Empty;
+        _selectedProductId = null;
         CurrentOrderItem = new OrderItemFormModel();
         AvailableProducts = await productAPI.GetAvailableProductsAsync();
     }
