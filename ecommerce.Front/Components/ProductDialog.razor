@@ -4,9 +4,11 @@
 
 <MudDialog>
     <TitleContent>
-        @(IsEditMode ? "Edit Product" : "New Product")
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(IsEditMode? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-1" />
+            @(IsEditMode ? "Edit Product" : "New Product")
+        </MudText>
     </TitleContent>
-
     <DialogContent>
         <MudForm @ref="_form" Model="_productModel" @onsubmit="Submit" class="flex-column gap-4">
             <MudTextField Label="Product" @bind-Value="_productModel.Product" Required="true" />

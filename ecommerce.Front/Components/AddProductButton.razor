@@ -7,7 +7,10 @@
 @inject ProductAPI productAPI
 @inject ISnackbar snackbar
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenDialogAsync">New Product</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenDialogAsync">
+    <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-1" />
+    Add Product
+</MudButton>
 
 @code {
     [Parameter] public EventCallback OnProductAdded { get; set; }

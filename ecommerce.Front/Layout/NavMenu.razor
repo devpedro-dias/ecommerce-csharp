@@ -7,10 +7,12 @@
     <div class="nav-item px-3">
         <AuthorizeView>
             <Authorized>
-                <MudNavLink Href="/products" Match="NavLinkMatch.All">
+                <MudNavLink Href="/products" Match="NavLinkMatch.All" class="mt-1">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Class="mr-1"  />
                     Products
                 </MudNavLink>
-                <MudNavLink Href="/orders" Match="NavLinkMatch.All">
+                <MudNavLink Href="/orders" Match="NavLinkMatch.All" class="mt-1">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Class="mr-1" />
                     Orders
                 </MudNavLink>
             </Authorized>
