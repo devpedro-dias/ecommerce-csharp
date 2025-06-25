@@ -1,64 +1,26 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using ecommerce.Front.Services
+@using MudBlazor
 
-@inject AuthAPI authAPI
-@inject NavigationManager navigationManager
 
-<div class="top-row navbar navbar-dark">
-    <div class="container-fluid d-flex align-items-center justify-content-center">
-        <a class="navbar-brand" href="/">Ecommerce</a>
-        @* <MudSwitch @bind-Value="_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool"/> *@
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
-
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <AuthorizeView>
-                <NavLink class="nav-link" href="/products" Match="NavLinkMatch.All">
-                    Products
-                </NavLink>
-                <NavLink class="nav-link" href="/orders" Match="NavLinkMatch.All">
-                    Orders
-                </NavLink>
-            </AuthorizeView>
-        </div>
-    </nav>
-
-    <div class="d-flex align-items-center justify-content-start">
+<MudNavMenu>
+    <div class="nav-item px-3">
         <AuthorizeView>
             <Authorized>
-                <MudButton Class="ml-4" Variant="Variant.Outlined" Color="Color.Default" @onclick="Logout">
-                    Logout
-                </MudButton>
+                <MudNavLink Href="/products" Match="NavLinkMatch.All">
+                    Products
+                </MudNavLink>
+                <MudNavLink Href="/orders" Match="NavLinkMatch.All">
+                    Orders
+                </MudNavLink>
             </Authorized>
         </AuthorizeView>
     </div>
-
-</div>
+</MudNavMenu>
 
 @code {
-    private MudTheme _theme = new()
-    {
-        PaletteDark = new PaletteDark()
-        {
-            Primary = "#0D47A1",
-            Secondary = "#1565C0",
-            Tertiary = "#90CAF9"
-        }
-    };
-
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    [Inject] private AuthAPI authAPI { get; set; } = default!;
+    [Inject] private NavigationManager navigationManager { get; set; } = default!;
 
     private async Task Logout()
     {

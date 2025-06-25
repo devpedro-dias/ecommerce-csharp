@@ -11,105 +11,111 @@
 @inject OrderAPI orderAPI
 @inject IDialogService DialogService
 
-<MudBreadcrumbs Items="_items" Separator=">" Style="color: #00796B;" />
+<article>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <MudText Typo="Typo.h6" Class="mb-4">Orders</MudText>
-        <p>Below is all your orders.</p>
+
+    <div class="text-primary mt-5">
+        <MudBreadcrumbs Items="_items" Separator=">"/>
     </div>
-    <div>
-        <AddOrderButton OnOrderAdded="HandleOrderAdded" />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <MudText Typo="Typo.h6" Class="mb-4">Orders</MudText>
+            <p>Below is all your orders.</p>
+        </div>
+        <div>
+            <AddOrderButton OnOrderAdded="HandleOrderAdded" />
+        </div>
     </div>
-</div>
 
-<MudDataGrid @ref="_dataGrid" T="OrderResponseDTO"
-             ServerData="@ServerReload"
-             Hover FixedHeader Groupable="true"
-             ReadOnly="@_isReadOnly"
-             ExpandSingleRow="@_expandSingleRow">
-    <ToolBarContent>
-        <MudText Typo="Typo.h6">Orders Details</MudText>
-        <MudSpacer />
-        <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Order filter"
-                      @bind-Value="_searchString" @bind-Value:after="@(() => _dataGrid.ReloadServerData())"
-                      DebounceInterval="300" Variant="Variant.Outlined" Clearable />
-    </ToolBarContent>
-    <GroupTemplate>
-        <span style="font-weight:bold">
-            Pedido ID: @context.Grouping.Key - Data: @(((OrderResponseDTO)context.Grouping.First()).Date.ToShortDateString())
-            <MudChip Size="Size.Small" Color="Color.Primary" Class="ml-2">
-                Total Products: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Count())
-                - Total Price: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Sum(op => op.TotalPrice)).ToString("C")
-            </MudChip>
-        </span>
-    </GroupTemplate>
-    <Columns>
-        <HierarchyColumn T="OrderResponseDTO" EnableHeaderToggle="@_enableHeaderToggle" />
-        <PropertyColumn Property="x => x.Date" Title="Order Date" Format="d" Sortable="true" />
-        <PropertyColumn Property="x => x.OrderProducts.Sum(op => op.TotalPrice)" Title="Total Price Order" Format="C" Sortable="true" />
+    <MudDataGrid @ref="_dataGrid" T="OrderResponseDTO"
+                 ServerData="@ServerReload"
+                 Hover FixedHeader Groupable="true"
+                 ReadOnly="@_isReadOnly"
+                 ExpandSingleRow="@_expandSingleRow">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Orders Details</MudText>
+            <MudSpacer />
+            <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Order filter"
+                          @bind-Value="_searchString" @bind-Value:after="@(() => _dataGrid.ReloadServerData())"
+                          DebounceInterval="300" Variant="Variant.Outlined" Clearable />
+        </ToolBarContent>
+        <GroupTemplate>
+            <span style="font-weight:bold">
+                Pedido ID: @context.Grouping.Key - Data: @(((OrderResponseDTO)context.Grouping.First()).Date.ToShortDateString())
+                <MudChip Size="Size.Small" Color="Color.Primary" Class="ml-2">
+                    Total Products: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Count())
+                    - Total Price: @(((OrderResponseDTO)context.Grouping.First()).OrderProducts.Sum(op => op.TotalPrice)).ToString("C")
+                </MudChip>
+            </span>
+        </GroupTemplate>
+        <Columns>
+            <HierarchyColumn T="OrderResponseDTO" EnableHeaderToggle="@_enableHeaderToggle" />
+            <PropertyColumn Property="x => x.Date" Title="Order Date" Format="d" Sortable="true" />
+            <PropertyColumn Property="x => x.OrderProducts.Sum(op => op.TotalPrice)" Title="Total Price Order" Format="C" Sortable="true" />
 
-        <TemplateColumn T="OrderResponseDTO" Title="Actions">
-            <CellTemplate Context="order">
-                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                    <MudMenuItem OnClick="@(() => DeleteOrder(order.Item))">
-                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" Color="Color.Error" /> Delete
-                    </MudMenuItem>
-                </MudMenu>
-            </CellTemplate>
-        </TemplateColumn>
-    </Columns>
-    <ChildRowContent>
-        <MudTd>
-            <MudDataGrid T="OrderProductSummaryDTO"
-                         Items="@(((OrderResponseDTO)context.Item).OrderProducts)"
-                         Groupable="true"
-                         Dense="true" Bordered="true" FixedHeader="true" Width="100%">
-                <GroupTemplate Context="orderProduct">
-                    <span style="font-weight:bold">
-                        Product ID: @orderProduct.Grouping.Key.ToString().Substring(0, 8)...
-                        <MudChip Size="Size.Small" Color="Color.Secondary" Class="ml-2">
-                            Total Quantity: @orderProduct.Grouping.Sum(p => p.Quantity)
-                        </MudChip>
-                    </span>
-                </GroupTemplate>
-                <Columns>
-                    <PropertyColumn Property="op => op.ProductName" Title="Product" Groupable="true" />
-                    <PropertyColumn Property="op => op.Quantity" Title="Quantity" />
-                    <TemplateColumn Title="Unit Price">
-                        <CellTemplate Context="productContext">
-                            @(productContext.Item.Quantity != 0 ? (productContext.Item.TotalPrice / productContext.Item.Quantity).ToString("C") : "0")
-                        </CellTemplate>
-                    </TemplateColumn>
-                    <PropertyColumn Property="op => op.TotalPrice" Title="Total Price" Format="C" />
-                </Columns>
-                <NoRecordsContent>
-                    <MudText>Do not have products in this order.</MudText>
-                </NoRecordsContent>
-            </MudDataGrid>
-        </MudTd>
-    </ChildRowContent>
-    <NoRecordsContent>
-        <MudText>No orders found.</MudText>
-    </NoRecordsContent>
-    <LoadingContent>
-        <MudText>Loading orders...</MudText>
-    </LoadingContent>
-    <PagerContent>
-        <MudDataGridPager T="OrderResponseDTO" />
-    </PagerContent>
-</MudDataGrid>
+            <TemplateColumn T="OrderResponseDTO" Title="Actions">
+                <CellTemplate Context="order">
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                        <MudMenuItem OnClick="@(() => DeleteOrder(order.Item))">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" Color="Color.Error" /> Delete
+                        </MudMenuItem>
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <ChildRowContent>
+            <MudTd>
+                <MudDataGrid T="OrderProductSummaryDTO"
+                             Items="@(((OrderResponseDTO)context.Item).OrderProducts)"
+                             Groupable="true"
+                             Dense="true" Bordered="true" FixedHeader="true" Width="100%">
+                    <GroupTemplate Context="orderProduct">
+                        <span style="font-weight:bold">
+                            Product ID: @orderProduct.Grouping.Key.ToString().Substring(0, 8)...
+                            <MudChip Size="Size.Small" Color="Color.Secondary" Class="ml-2">
+                                Total Quantity: @orderProduct.Grouping.Sum(p => p.Quantity)
+                            </MudChip>
+                        </span>
+                    </GroupTemplate>
+                    <Columns>
+                        <PropertyColumn Property="op => op.ProductName" Title="Product" Groupable="true" />
+                        <PropertyColumn Property="op => op.Quantity" Title="Quantity" />
+                        <TemplateColumn Title="Unit Price">
+                            <CellTemplate Context="productContext">
+                                @(productContext.Item.Quantity != 0 ? (productContext.Item.TotalPrice / productContext.Item.Quantity).ToString("C") : "0")
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <PropertyColumn Property="op => op.TotalPrice" Title="Total Price" Format="C" />
+                    </Columns>
+                    <NoRecordsContent>
+                        <MudText>Do not have products in this order.</MudText>
+                    </NoRecordsContent>
+                </MudDataGrid>
+            </MudTd>
+        </ChildRowContent>
+        <NoRecordsContent>
+            <MudText>No orders found.</MudText>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText>Loading orders...</MudText>
+        </LoadingContent>
+        <PagerContent>
+            <MudDataGridPager T="OrderResponseDTO" />
+        </PagerContent>
+    </MudDataGrid>
 
-<div class="d-flex flex-wrap mt-4">
-    <MudSwitch T="bool" @bind-Value="_expandSingleRow" Label="Expand only one row at a time" Color="@Color.Primary" />
-    <MudSwitch T="bool" @bind-Value="_enableHeaderToggle" Label="Enable expand button in header" Color="@Color.Primary" />
-    <MudButton OnClick="@ExpandAllHierarchyAsync">
-        Expand All Orders
-    </MudButton>
-    <MudButton OnClick="@CollapseAllHierarchyAsync">
-        Retract All Orders
-    </MudButton>
-</div>
+    <div class="d-flex flex-wrap mt-4">
+        <MudSwitch T="bool" @bind-Value="_expandSingleRow" Label="Expand only one row at a time" Color="@Color.Primary" />
+        <MudSwitch T="bool" @bind-Value="_enableHeaderToggle" Label="Enable expand button in header" Color="@Color.Primary" />
+        <MudButton OnClick="@ExpandAllHierarchyAsync">
+            Expand All Orders
+        </MudButton>
+        <MudButton OnClick="@CollapseAllHierarchyAsync">
+            Retract All Orders
+        </MudButton>
+    </div>
+</article>
 
 @code {
     private List<BreadcrumbItem> _items = new()

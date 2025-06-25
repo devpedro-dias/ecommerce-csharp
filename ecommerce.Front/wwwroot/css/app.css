@@ -1,5 +1,6 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #121212;
 }
 
 h1:focus {
@@ -7,7 +8,7 @@ h1:focus {
 }
 
 a, .btn-link {
-    color: #0071c1;
+    color: #00796B;
 }
 
 .btn-primary {
@@ -84,7 +85,7 @@ a, .btn-link {
     }
 
         .loading-progress circle:last-child {
-            stroke: #1b6ec2;
+            stroke: #00796B;
             stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
             transition: stroke-dasharray 0.05s ease-in-out;
         }
@@ -94,6 +95,7 @@ a, .btn-link {
     text-align: center;
     font-weight: bold;
     inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    color: #E0E0E0;
 }
 
     .loading-progress-text:after {
